@@ -36,20 +36,40 @@ void ClientHandler::handle_client(SOCKET client_socket) {
                 if (!cmd.error.empty()) {
                     response = cmd.error + "\r\n";
                 } else {
-                    // Dummy implementations for Phase 2
                     if (cmd.name == "SET") {
-                        if (cmd.args.size() == 2) response = "OK\r\n";
-                        else response = "ERR wrong number of arguments for 'SET' command\r\n";
+                        if (cmd.args.size() == 2) {
+                            engine_.set(cmd.args[0], cmd.args[1]);
+                            response = "OK\r\n";
+                        } else {
+                            response = "ERR wrong number of arguments for 'SET' command\r\n";
+                        }
                     } else if (cmd.name == "GET") {
-                        if (cmd.args.size() == 1) response = "(nil)\r\n";
-                        else response = "ERR wrong number of arguments for 'GET' command\r\n";
+                        if (cmd.args.size() == 1) {
+                            auto val = engine_.get(cmd.args[0]);
+                            if (val.has_value()) {
+                                response = val.value() + "\r\n";
+                            } else {
+                                response = "(nil)\r\n";
+                            }
+                        } else {
+                            response = "ERR wrong number of arguments for 'GET' command\r\n";
+                        }
                     } else if (cmd.name == "DEL") {
-                        if (cmd.args.size() == 1) response = "0\r\n";
-                        else response = "ERR wrong number of arguments for 'DEL' command\r\n";
+                        if (cmd.args.size() == 1) {
+                            bool deleted = engine_.del(cmd.args[0]);
+                            response = (deleted ? "1" : "0") + std::string("\r\n");
+                        } else {
+                            response = "ERR wrong number of arguments for 'DEL' command\r\n";
+                        }
                     } else if (cmd.name == "EXISTS") {
-                        if (cmd.args.size() == 1) response = "0\r\n";
-                        else response = "ERR wrong number of arguments for 'EXISTS' command\r\n";
+                        if (cmd.args.size() == 1) {
+                            bool exists = engine_.exists(cmd.args[0]);
+                            response = (exists ? "1" : "0") + std::string("\r\n");
+                        } else {
+                            response = "ERR wrong number of arguments for 'EXISTS' command\r\n";
+                        }
                     } else if (cmd.name == "EXPIRE") {
+                        // Dummy implementation until Phase 4
                         if (cmd.args.size() == 2) response = "0\r\n";
                         else response = "ERR wrong number of arguments for 'EXPIRE' command\r\n";
                     } else {

@@ -1,8 +1,10 @@
 #include "server.h"
 #include "kv_engine.h"
 #include "logger.h"
+#include "ttl_manager.h"
 #include <winsock2.h>
 #include <windows.h>
+#include <thread>
 
 std::atomic<bool> running{true};
 SOCKET listen_socket = INVALID_SOCKET;
@@ -30,8 +32,16 @@ int main() {
 
     KVEngine engine; // Single global instance
 
+    TTLManager ttl_manager(engine);
+    std::thread ttl_thread(&TTLManager::run, &ttl_manager);
+
     Server server(engine);
-    server.run(); // Blocks until running is false
+    server.run(); // Blocks until running is false. Client threads joined inside run().
+
+    Logger::log("Joining TTL Manager thread...");
+    if (ttl_thread.joinable()) {
+        ttl_thread.join();
+    }
 
     // Normal shutdown sequence
     WSACleanup();

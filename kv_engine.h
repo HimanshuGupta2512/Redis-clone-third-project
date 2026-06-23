@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <optional>
+#include <chrono>
 
 class KVEngine {
 public:
@@ -14,9 +15,12 @@ public:
     std::optional<std::string> get(const std::string& key);
     bool del(const std::string& key);
     bool exists(const std::string& key);
+    bool expire(const std::string& key, int seconds);
+    void sweep_expired_keys();
 
 private:
     std::unordered_map<std::string, std::string> store_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> ttl_map_;
     std::mutex mutex_;
 };
 

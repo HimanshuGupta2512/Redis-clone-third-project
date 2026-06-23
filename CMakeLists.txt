@@ -18,6 +18,7 @@ add_executable(cachelite
     client_handler.cpp
     command_parser.cpp
     kv_engine.cpp
+    ttl_manager.cpp
 )
 
 # Link Winsock2 privately

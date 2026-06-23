@@ -69,9 +69,20 @@ void ClientHandler::handle_client(SOCKET client_socket) {
                             response = "ERR wrong number of arguments for 'EXISTS' command\r\n";
                         }
                     } else if (cmd.name == "EXPIRE") {
-                        // Dummy implementation until Phase 4
-                        if (cmd.args.size() == 2) response = "0\r\n";
-                        else response = "ERR wrong number of arguments for 'EXPIRE' command\r\n";
+                        if (cmd.args.size() == 2) {
+                            try {
+                                int seconds = std::stoi(cmd.args[1]);
+                                if (engine_.expire(cmd.args[0], seconds)) {
+                                    response = "1\r\n";
+                                } else {
+                                    response = "0\r\n";
+                                }
+                            } catch (const std::exception&) {
+                                response = "ERR value is not an integer or out of range\r\n";
+                            }
+                        } else {
+                            response = "ERR wrong number of arguments for 'EXPIRE' command\r\n";
+                        }
                     } else {
                         response = "ERR unknown command '" + cmd.name + "'\r\n";
                     }

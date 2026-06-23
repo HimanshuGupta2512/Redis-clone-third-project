@@ -1,5 +1,6 @@
 #include "server.h"
 #include "logger.h"
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
 

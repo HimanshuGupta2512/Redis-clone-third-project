@@ -1,4 +1,5 @@
 #include "server.h"
+#include "client_handler.h"
 #include "logger.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -55,28 +56,29 @@ void Server::run() {
         inet_ntop(AF_INET, &client_addr.sin_addr, ip_str, INET_ADDRSTRLEN);
         Logger::log("Client connected from " + std::string(ip_str));
 
-        // Phase 1: basic single-threaded echo and close
-        char buffer[1024];
-        int bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received > 0) {
-            buffer[bytes_received] = '\0';
-            
-            // Trim trailing newlines for cleaner logging
-            std::string msg(buffer);
-            while (!msg.empty() && (msg.back() == '\r' || msg.back() == '\n')) {
-                msg.pop_back();
-            }
-            
-            Logger::log("Received: " + msg);
-            send(client_socket, buffer, bytes_received, 0);
-        } else if (bytes_received == 0) {
-            Logger::log("Client disconnected during read");
-        } else {
-            Logger::error("recv failed");
-        }
+        // Apply SO_RCVTIMEO to prevent recv hang during shutdown
+        int timeout_ms = 1000;
+        setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout_ms, sizeof(timeout_ms));
 
-        closesocket(client_socket);
-        Logger::log("Connection closed.");
+        {
+            std::lock_guard<std::mutex> lock(client_threads_mutex);
+            client_threads.emplace_back([this, client_socket]() {
+                ClientHandler handler(this->engine_);
+                handler.handle_client(client_socket);
+            });
+        }
+    }
+
+    Logger::log("Server shutdown initiated. Joining client threads...");
+    
+    {
+        std::lock_guard<std::mutex> lock(client_threads_mutex);
+        for (auto& t : client_threads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+        client_threads.clear();
     }
 
     Logger::log("Server shutdown complete.");

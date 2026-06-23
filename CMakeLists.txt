@@ -15,6 +15,8 @@ add_executable(cachelite
     main.cpp
     server.cpp
     logger.cpp
+    client_handler.cpp
+    command_parser.cpp
 )
 
 # Link Winsock2 privately

@@ -2,6 +2,7 @@
 #include "kv_engine.h"
 #include "logger.h"
 #include "ttl_manager.h"
+#include "persistence_manager.h"
 #include <winsock2.h>
 #include <windows.h>
 #include <thread>
@@ -32,6 +33,8 @@ int main() {
 
     KVEngine engine; // Single global instance
 
+    PersistenceManager::load_from_disk(engine);
+
     TTLManager ttl_manager(engine);
     std::thread ttl_thread(&TTLManager::run, &ttl_manager);
 
@@ -42,6 +45,9 @@ int main() {
     if (ttl_thread.joinable()) {
         ttl_thread.join();
     }
+
+    Logger::log("Saving to disk...");
+    PersistenceManager::save_to_disk(engine);
 
     // Normal shutdown sequence
     WSACleanup();

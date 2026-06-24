@@ -6,6 +6,8 @@
 #include <mutex>
 #include <optional>
 #include <chrono>
+#include <vector>
+#include <tuple>
 
 class KVEngine {
 public:
@@ -17,6 +19,9 @@ public:
     bool exists(const std::string& key);
     bool expire(const std::string& key, int seconds);
     void sweep_expired_keys();
+
+    std::vector<std::tuple<std::string, std::string, std::optional<std::chrono::steady_clock::time_point>>> get_all_for_persistence();
+    void load_from_persistence(const std::string& key, const std::string& value, std::optional<std::chrono::steady_clock::time_point> ttl);
 
 private:
     std::unordered_map<std::string, std::string> store_;

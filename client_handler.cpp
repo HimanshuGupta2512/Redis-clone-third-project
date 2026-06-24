@@ -3,6 +3,9 @@
 #include "logger.h"
 #include <string>
 #include <vector>
+#include <atomic>
+
+extern std::atomic<bool> running;
 
 ClientHandler::ClientHandler(KVEngine& engine) : engine_(engine) {}
 

@@ -86,3 +86,26 @@ void KVEngine::sweep_expired_keys() {
         Logger::log("Sweep: purged " + std::to_string(count) + " expired key(s): " + purged_keys);
     }
 }
+
+std::vector<std::tuple<std::string, std::string, std::optional<std::chrono::steady_clock::time_point>>> KVEngine::get_all_for_persistence() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<std::tuple<std::string, std::string, std::optional<std::chrono::steady_clock::time_point>>> snapshot;
+    for (const auto& [k, v] : store_) {
+        std::optional<std::chrono::steady_clock::time_point> ttl;
+        if (ttl_map_.find(k) != ttl_map_.end()) {
+            ttl = ttl_map_[k];
+        }
+        snapshot.emplace_back(k, v, ttl);
+    }
+    return snapshot;
+}
+
+void KVEngine::load_from_persistence(const std::string& key, const std::string& value, std::optional<std::chrono::steady_clock::time_point> ttl) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    store_[key] = value;
+    if (ttl.has_value()) {
+        ttl_map_[key] = ttl.value();
+    } else {
+        ttl_map_.erase(key);
+    }
+}

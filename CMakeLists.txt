@@ -24,3 +24,7 @@ add_executable(cachelite
 
 # Link Winsock2 privately
 target_link_libraries(cachelite PRIVATE ws2_32)
+
+add_executable(stress_client stress_client.cpp)
+target_link_libraries(stress_client PRIVATE ws2_32)
+target_compile_features(stress_client PRIVATE cxx_std_17)

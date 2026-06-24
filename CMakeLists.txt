@@ -1,30 +1,31 @@
 cmake_minimum_required(VERSION 3.10)
-project(CacheLite)
+project(CacheLite CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Ensure WinSock2 library is linked on Windows
-if(WIN32)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+# Windows specific library
+if (WIN32)
+    link_libraries(ws2_32)
 endif()
+
+include_directories(include)
 
 # Main server executable
 add_executable(cachelite 
-    main.cpp
-    server.cpp
-    logger.cpp
-    client_handler.cpp
-    command_parser.cpp
-    kv_engine.cpp
-    ttl_manager.cpp
-    persistence_manager.cpp
+    src/main.cpp
+    src/server.cpp
+    src/logger.cpp
+    src/client_handler.cpp
+    src/command_parser.cpp
+    src/kv_engine.cpp
+    src/ttl_manager.cpp
+    src/persistence_manager.cpp
 )
 
 # Link Winsock2 privately
 target_link_libraries(cachelite PRIVATE ws2_32)
 
-add_executable(stress_client stress_client.cpp)
+add_executable(stress_client tools/stress_client.cpp)
 target_link_libraries(stress_client PRIVATE ws2_32)
 target_compile_features(stress_client PRIVATE cxx_std_17)
